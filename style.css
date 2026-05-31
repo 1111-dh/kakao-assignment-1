@@ -1,0 +1,141 @@
+/* 기본 스타일 초기화 및 폰트 설정 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background-color: #f9f9fb;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    color: #333333;
+}
+
+/* 미니멀한 생산성 앱 스타일의 메인 컨테이너 */
+.todo-container {
+    background-color: #ffffff;
+    width: 100%;
+    max-width: 420px;
+    padding: 2.5rem 2rem;
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(103, 43, 224, 0.04);
+}
+
+header h1 {
+    font-size: 1.75rem;
+    color: #672be0; /* 메인 컬러 적용 */
+    margin-bottom: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+}
+
+/* 입력 폼 스타일 레이아웃 */
+#todo-form {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 1.5rem;
+}
+
+#todo-input {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.2s ease;
+}
+
+/* 입력창 포커스 시 메인 컬러 강조 */
+#todo-input:focus {
+    border-color: #672be0;
+}
+
+#add-btn {
+    background-color: #672be0; /* 메인 컬러 적용 */
+    color: #ffffff;
+    border: none;
+    padding: 0.75rem 1.25rem;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+#add-btn:hover {
+    background-color: #5321b8; /* 호버 시 피드백을 위한 어두운 메인 컬러 */
+}
+
+/* Todo 리스트 레이아웃 */
+#todo-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* 개별 Todo 아이템 스타일 */
+.todo-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    background-color: #ffffff;
+    border: 1.5px solid #f1f5f9;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.todo-text {
+    font-size: 0.95rem;
+    color: #334155;
+    word-break: break-all;
+    flex: 1;
+    margin-right: 12px;
+}
+
+/* 완료 조건 충족 시 적용될 스타일 (취소선 및 색상 변경) */
+.todo-item.completed .todo-text {
+    text-decoration: line-through;
+    color: #94a3b8;
+}
+
+/* 기능 버튼 그룹 */
+.btn-group {
+    display: flex;
+    gap: 4px;
+}
+
+.action-btn {
+    border: none;
+    padding: 0.35rem 0.6rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+/* 각 버튼의 역할에 따른 미니멀 톤온톤 컬러 구성 */
+.complete-btn {
+    background-color: #f0fdf4;
+    color: #16a34a;
+}
+.complete-btn:hover { background-color: #dcfce7; }
+
+.edit-btn {
+    background-color: #fef9c3;
+    color: #ca8a04;
+}
+.edit-btn:hover { background-color: #fef08a; }
+
+.delete-btn {
+    background-color: #fef2f2;
+    color: #dc2626;
+}
+.delete-btn:hover { background-color: #fee2e2; }
