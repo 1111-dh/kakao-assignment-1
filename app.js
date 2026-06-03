@@ -1,141 +1,340 @@
-// Todo 아이템을 관리할 애플리케이션 상태(State) 배열
+// 상태 관리
 let todos = [];
+let currentFilter = 'all'; 
+let currentView = 'week'; 
+let selectedDate = new Date(); 
 
-// DOM 요소 선택
+// 주간/월간 렌더링 기준점
+let currentWeekStart = getStartOfWeek(new Date()); 
+let currentMonthStart = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
+
+// DOM 요소
 const todoForm = document.getElementById('todo-form');
 const todoInput = document.getElementById('todo-input');
 const todoList = document.getElementById('todo-list');
+const filterBtns = document.querySelectorAll('.filter-btn');
+const viewBtns = document.querySelectorAll('.view-btn');
+
+const prevBtn = document.getElementById('prev-btn');
+const nextBtn = document.getElementById('next-btn');
+const dateDisplay = document.getElementById('current-date-display');
+
+const weekCalendar = document.getElementById('week-calendar');
+const monthCalendar = document.getElementById('month-calendar');
+const monthGrid = document.getElementById('month-grid');
+
+const DAY_NAMES = ['일', '월', '화', '수', '목', '금', '토'];
 
 /**
- * 애플리케이션의 이벤트 리스너를 초기화하는 함수
+ * 앱 초기화
  */
 function initializeApp() {
+    loadFromLocalStorage();
+
     todoForm.addEventListener('submit', handleAddTodo);
+    filterBtns.forEach(btn => btn.addEventListener('click', handleFilterChange));
+    viewBtns.forEach(btn => btn.addEventListener('click', handleViewChange));
+
+    prevBtn.addEventListener('click', () => navigateCalendar(-1));
+    nextBtn.addEventListener('click', () => navigateCalendar(1));
+
+    renderApp();
 }
 
 /**
- * Todo 추가를 처리하는 이벤트 핸들러 함수 (Create)
+ * 로컬스토리지 연동
  */
-function handleAddTodo(event) {
-    event.preventDefault(); // 폼 제출 시 발생하는 페이지 새로고침 방지
+function saveToLocalStorage() {
+    localStorage.setItem('todos', JSON.stringify(todos));
+}
 
-    const todoText = todoInput.value.trim();
-
-    // 입력값 검증: 비어있을 경우 예외 처리 후 경고 메시지 출력
-    if (todoText === '') {
-        alert('할 일을 내용을 입력해주세요.');
-        return;
-    }
-
-    // 새 Todo 객체 모델 설계
-    const newTodo = {
-        id: Date.now(), // 고유 식별자로 현재 타임스탬프 활용
-        text: todoText,
-        completed: false
-    };
-
-    // 데이터 상태 업데이트 및 UI 렌더링
-    todos.push(newTodo);
-    clearInput();
-    renderTodos();
+function loadFromLocalStorage() {
+    const saved = localStorage.getItem('todos');
+    todos = saved ? JSON.parse(saved) : [];
 }
 
 /**
- * Todo의 완료 상태를 토글하는 함수 (Update - Status)
+ * 날짜 관련 유틸리티 함수
  */
-function toggleTodoComplete(id) {
-    todos = todos.map(todo => {
-        if (todo.id === id) {
-            return { ...todo, completed: !todo.completed };
-        }
-        return todo;
-    });
-    renderTodos();
+function getStartOfWeek(date) {
+    const start = new Date(date);
+    const day = start.getDay();
+    start.setDate(start.getDate() - day);
+    start.setHours(0, 0, 0, 0);
+    return start;
+}
+
+function getStorageDateString(dateObj) {
+    const year = dateObj.getFullYear();
+    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const day = String(dateObj.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+function isSameDay(date1, date2) {
+    return date1.getFullYear() === date2.getFullYear() &&
+           date1.getMonth() === date2.getMonth() &&
+           date1.getDate() === date2.getDate();
 }
 
 /**
- * Todo의 텍스트 내용을 수정하는 함수 (Update - Text)
+ * [신규] 특정 날짜의 진행 중 / 완료된 Todo 개수를 각각 계산하여 객체로 반환
  */
-function editTodoText(id) {
-    const targetTodo = todos.find(todo => todo.id === id);
-    if (!targetTodo) return;
-
-    // 미니멀한 처리를 위해 브라우저 prompt 창 활용
-    const updatedText = prompt('할 일을 수정하세요:', targetTodo.text);
+function getTodoStatsForDate(dateStr) {
+    const dateTodos = todos.filter(todo => todo.date === dateStr);
+    const activeCount = dateTodos.filter(todo => !todo.completed).length;
+    const completedCount = dateTodos.filter(todo => todo.completed).length;
     
-    // 사용자가 취소를 누르거나 공백만 입력했을 때의 예외 처리
-    if (updatedText === null) return;
-    if (updatedText.trim() === '') {
-        alert('내용을 올바르게 입력해주세요.');
+    return { activeCount, completedCount };
+}
+
+/**
+ * 주/월 뷰 토글 처리
+ */
+function handleViewChange(event) {
+    currentView = event.target.getAttribute('data-view');
+    
+    viewBtns.forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+
+    if (currentView === 'week') {
+        weekCalendar.classList.remove('hidden');
+        monthCalendar.classList.add('hidden');
+        currentWeekStart = getStartOfWeek(selectedDate); 
+    } else {
+        weekCalendar.classList.add('hidden');
+        monthCalendar.classList.remove('hidden');
+        currentMonthStart = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
+    }
+    
+    renderApp();
+}
+
+/**
+ * 이전/다음 네비게이션 처리
+ */
+function navigateCalendar(offset) {
+    if (currentView === 'week') {
+        currentWeekStart.setDate(currentWeekStart.getDate() + (offset * 7));
+    } else {
+        currentMonthStart.setMonth(currentMonthStart.getMonth() + offset);
+    }
+    renderApp();
+}
+
+/**
+ * 전체 화면 렌더링 통합 (달력 + 목록)
+ */
+function renderApp() {
+    if (currentView === 'week') {
+        renderWeekCalendar();
+    } else {
+        renderMonthCalendar();
+    }
+    renderTodos();
+}
+
+/**
+ * 주간 달력 렌더링
+ */
+function renderWeekCalendar() {
+    weekCalendar.innerHTML = '';
+    const year = currentWeekStart.getFullYear();
+    const month = currentWeekStart.getMonth() + 1;
+    dateDisplay.textContent = `${year}년 ${month}월`;
+
+    const today = new Date();
+
+    for (let i = 0; i < 7; i++) {
+        const currentDay = new Date(currentWeekStart);
+        currentDay.setDate(currentWeekStart.getDate() + i);
+        
+        const dateStr = getStorageDateString(currentDay);
+        const stats = getTodoStatsForDate(dateStr); // 해당 날짜의 진행/완료 통계 산출
+        const isSelected = isSameDay(currentDay, selectedDate);
+
+        const dayBlock = document.createElement('div');
+        dayBlock.className = 'day-block';
+        
+        if (isSameDay(currentDay, today)) dayBlock.classList.add('today');
+        if (isSelected) dayBlock.classList.add('selected');
+
+        // 상태값에 따른 인디케이터(점/뱃지) HTML 동적 구성
+        let indicatorsHtml = '<div class="indicators-container">';
+        if (stats.activeCount > 0) {
+            indicatorsHtml += `<span class="indicator active-indicator">${isSelected ? stats.activeCount : ''}</span>`;
+        }
+        if (stats.completedCount > 0) {
+            indicatorsHtml += `<span class="indicator completed-indicator">${isSelected ? stats.completedCount : ''}</span>`;
+        }
+        indicatorsHtml += '</div>';
+
+        dayBlock.innerHTML = `
+            <span class="day-name">${DAY_NAMES[i]}</span>
+            <span class="day-number">${currentDay.getDate()}</span>
+            ${indicatorsHtml}
+        `;
+
+        dayBlock.addEventListener('click', () => {
+            selectedDate = new Date(currentDay);
+            renderApp();
+        });
+
+        weekCalendar.appendChild(dayBlock);
+    }
+}
+
+/**
+ * 월간 달력 렌더링
+ */
+function renderMonthCalendar() {
+    monthGrid.innerHTML = '';
+    const year = currentMonthStart.getFullYear();
+    const month = currentMonthStart.getMonth();
+    dateDisplay.textContent = `${year}년 ${month + 1}월`;
+
+    const firstDayIndex = new Date(year, month, 1).getDay();
+    const lastDate = new Date(year, month + 1, 0).getDate();
+    const today = new Date();
+
+    for (let i = 0; i < firstDayIndex; i++) {
+        const emptyBlock = document.createElement('div');
+        emptyBlock.className = 'day-block empty';
+        monthGrid.appendChild(emptyBlock);
+    }
+
+    for (let i = 1; i <= lastDate; i++) {
+        const currentDay = new Date(year, month, i);
+        const dateStr = getStorageDateString(currentDay);
+        const stats = getTodoStatsForDate(dateStr); // 해당 날짜의 진행/완료 통계 산출
+        const isSelected = isSameDay(currentDay, selectedDate);
+
+        const dayBlock = document.createElement('div');
+        dayBlock.className = 'day-block';
+
+        if (isSameDay(currentDay, today)) dayBlock.classList.add('today');
+        if (isSelected) dayBlock.classList.add('selected');
+
+        // 상태값에 따른 인디케이터(점/뱃지) HTML 동적 구성
+        let indicatorsHtml = '<div class="indicators-container">';
+        if (stats.activeCount > 0) {
+            indicatorsHtml += `<span class="indicator active-indicator">${isSelected ? stats.activeCount : ''}</span>`;
+        }
+        if (stats.completedCount > 0) {
+            indicatorsHtml += `<span class="indicator completed-indicator">${isSelected ? stats.completedCount : ''}</span>`;
+        }
+        indicatorsHtml += '</div>';
+
+        dayBlock.innerHTML = `
+            <span class="day-number">${i}</span>
+            ${indicatorsHtml}
+        `;
+
+        dayBlock.addEventListener('click', () => {
+            selectedDate = new Date(currentDay);
+            renderApp();
+        });
+
+        monthGrid.appendChild(dayBlock);
+    }
+}
+
+/**
+ * 기능: 추가, 필터, 완료, 수정, 삭제 로직
+ */
+function handleFilterChange(event) {
+    currentFilter = event.target.getAttribute('data-filter');
+    filterBtns.forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+    renderTodos();
+}
+
+function handleAddTodo(event) {
+    event.preventDefault();
+    const text = todoInput.value.trim();
+    if (!text) { alert('할 일을 입력해주세요.'); return; }
+
+    todos.push({ 
+        id: Date.now(), 
+        text, 
+        completed: false,
+        date: getStorageDateString(selectedDate)
+    });
+    
+    todoInput.value = '';
+    saveToLocalStorage();
+    renderApp();
+}
+
+function toggleComplete(id) {
+    todos = todos.map(t => t.id === id ? { ...t, completed: !t.completed } : t);
+    saveToLocalStorage();
+    renderApp();
+}
+
+function editTodo(id) {
+    const todo = todos.find(t => t.id === id);
+    if (!todo) return;
+    const newText = prompt('할 일을 수정하세요:', todo.text);
+    if (!newText || !newText.trim()) return;
+    todo.text = newText.trim();
+    saveToLocalStorage();
+    renderApp();
+}
+
+function deleteTodo(id) {
+    todos = todos.filter(t => t.id !== id);
+    saveToLocalStorage();
+    renderApp();
+}
+
+function renderTodos() {
+    todoList.innerHTML = '';
+    const targetDate = getStorageDateString(selectedDate);
+    
+    const filtered = todos.filter(todo => {
+        if (todo.date !== targetDate) return false;
+        if (currentFilter === 'active') return !todo.completed;
+        if (currentFilter === 'completed') return todo.completed;
+        return true; 
+    });
+
+    if (filtered.length === 0) {
+        todoList.innerHTML = `<li class="empty-msg">이 날짜에 등록된 할 일이 없습니다.</li>`;
         return;
     }
 
-    targetTodo.text = updatedText.trim();
-    renderTodos();
-}
-
-/**
- * Todo를 삭제하는 함수 (Delete)
- */
-function deleteTodo(id) {
-    todos = todos.filter(todo => todo.id !== id);
-    renderTodos();
-}
-
-/**
- * 입력창을 비워주는 보조 함수
- */
-function clearInput() {
-    todoInput.value = '';
-}
-
-/**
- * 최신 데이터 상태에 맞춰 화면을 갱신하는 렌더링 함수 (Read)
- */
-function renderTodos() {
-    // 기존 동적 DOM 요소를 초기화
-    todoList.innerHTML = '';
-
-    // todos 배열 요소 순회하며 리스트 아이템 빌드
-    todos.forEach(todo => {
+    filtered.forEach(todo => {
         const li = document.createElement('li');
         li.className = `todo-item ${todo.completed ? 'completed' : ''}`;
 
-        // 텍스트 노드 생성
         const textSpan = document.createElement('span');
         textSpan.className = 'todo-text';
         textSpan.textContent = todo.text;
-        li.appendChild(textSpan);
-
-        // 기능 버튼들을 담을 컨테이너 생성
+        
         const btnGroup = document.createElement('div');
         btnGroup.className = 'btn-group';
 
-        // 완료/취소 버튼 생성 및 이벤트 바인딩
         const completeBtn = document.createElement('button');
         completeBtn.className = 'action-btn complete-btn';
         completeBtn.textContent = todo.completed ? '취소' : '완료';
-        completeBtn.addEventListener('click', () => toggleTodoComplete(todo.id));
-        btnGroup.appendChild(completeBtn);
+        completeBtn.addEventListener('click', () => toggleComplete(todo.id));
 
-        // 수정 버튼 생성 및 이벤트 바인딩
         const editBtn = document.createElement('button');
         editBtn.className = 'action-btn edit-btn';
         editBtn.textContent = '수정';
-        editBtn.addEventListener('click', () => editTodoText(todo.id));
-        btnGroup.appendChild(editBtn);
+        editBtn.addEventListener('click', () => editTodo(todo.id));
 
-        // 삭제 버튼 생성 및 이벤트 바인딩
         const deleteBtn = document.createElement('button');
         deleteBtn.className = 'action-btn delete-btn';
         deleteBtn.textContent = '삭제';
         deleteBtn.addEventListener('click', () => deleteTodo(todo.id));
-        btnGroup.appendChild(deleteBtn);
 
-        li.appendChild(btnGroup);
+        btnGroup.append(completeBtn, editBtn, deleteBtn);
+        li.append(textSpan, btnGroup);
         todoList.appendChild(li);
     });
 }
 
-// 애플리케이션 시작 실행
+// 실행
 initializeApp();

@@ -9,13 +9,40 @@
 <body>
     <div class="todo-container">
         <header>
-            <h1>Todo List</h1>
+            <div class="header-top">
+                <h1>Todo List</h1>
+                <div class="view-toggle">
+                    <button class="view-btn active" data-view="week">주</button>
+                    <button class="view-btn" data-view="month">월</button>
+                </div>
+            </div>
+            
+            <div class="calendar-nav">
+                <button id="prev-btn" class="nav-btn">&lt;</button>
+                <h2 id="current-date-display">2023년 10월</h2>
+                <button id="next-btn" class="nav-btn">&gt;</button>
+            </div>
+            
+            <div id="week-calendar" class="calendar-view"></div>
+
+            <div id="month-calendar" class="calendar-view hidden">
+                <div class="month-header-days">
+                    <span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span>
+                </div>
+                <div id="month-grid" class="month-grid"></div>
+            </div>
         </header>
         
         <form id="todo-form">
             <input type="text" id="todo-input" placeholder="할 일을 입력하세요..." autocomplete="off">
             <button type="submit" id="add-btn">추가</button>
         </form>
+
+        <div class="filter-container">
+            <button class="filter-btn active" data-filter="all">전체</button>
+            <button class="filter-btn" data-filter="active">진행 중</button>
+            <button class="filter-btn" data-filter="completed">완료</button>
+        </div>
 
         <ul id="todo-list"></ul>
     </div>
