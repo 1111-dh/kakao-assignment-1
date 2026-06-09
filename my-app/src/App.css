@@ -1,0 +1,338 @@
+/* 메인 앱 컨테이너 */
+.todo-container {
+  background-color: #ffffff;
+  width: 100%;
+  max-width: 440px;
+  padding: 2.5rem 2rem;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(103, 43, 224, 0.04);
+}
+
+/* 헤더 상단 (타이틀 및 주/월 토글 버튼) */
+.header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  position: relative;
+}
+
+.header-top h1 {
+  font-size: 1.75rem;
+  color: #672be0; /* 메인 컬러 */
+  font-weight: 700;
+  margin: 0 auto;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* 뷰 전환 토글 (주/월) */
+.view-toggle {
+  display: flex;
+  background-color: #f1f5f9;
+  border-radius: 8px;
+  padding: 4px;
+  margin-left: auto;
+  z-index: 1;
+}
+
+.view-btn {
+  border: none;
+  background: none;
+  padding: 4px 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.view-btn.active {
+  background-color: #ffffff;
+  color: #672be0;
+  box-shadow: 0 2px 4px rgba(103, 43, 224, 0.06);
+}
+
+/* 달력 네비게이션 영역 */
+.calendar-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding: 0 0.5rem;
+  margin-top: 1.5rem;
+}
+
+.current-date-display {
+  font-size: 1.1rem;
+  color: #334155;
+  font-weight: 600;
+  min-width: 140px;
+  text-align: center;
+}
+
+.nav-btn {
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  font-weight: bold;
+}
+
+.nav-btn:hover {
+  color: #672be0;
+  background-color: #f1f5f9;
+}
+
+/* 캘린더 공통 그리드 (주간/월간 모두 사용) */
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  margin-bottom: 1.5rem;
+}
+
+/* 월간 뷰 전용 요일 헤더 */
+.month-header-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+/* 날짜 블록 공통 스타일 */
+.day-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.5rem 0.25rem;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1.5px solid transparent;
+  min-height: 54px;
+}
+
+.day-block:hover {
+  background-color: #f8fafc;
+}
+
+.day-block.empty {
+  cursor: default;
+}
+.day-block.empty:hover {
+  background-color: transparent;
+}
+
+.day-name {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+.day-number {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #334155;
+}
+
+/* [신규] 오늘 날짜 시각적 구분 (연한 배경색과 메인 컬러 글씨) */
+.day-block.today {
+  background-color: rgba(103, 43, 224, 0.08);
+}
+.day-block.today .day-number,
+.day-block.today .day-name {
+  color: #672be0;
+}
+
+/* 선택된 날짜 스타일 */
+.day-block.selected {
+  background-color: #672be0;
+  box-shadow: 0 4px 12px rgba(103, 43, 224, 0.2);
+}
+.day-block.selected .day-name,
+.day-block.selected .day-number {
+  color: #ffffff;
+}
+
+/* 상태별 인디케이터(진행/완료 갯수 및 색상 표시) 컨테이너 */
+.indicators-container {
+  display: flex;
+  gap: 4px;
+  margin-top: 6px;
+  min-height: 14px;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 인디케이터 기본 형태 */
+.indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-weight: 700;
+  transition: all 0.2s ease;
+}
+
+/* 날짜가 선택되지 않았을 때 (작은 점 형태) */
+.day-block:not(.selected) .indicator {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  font-size: 0;
+  padding: 0;
+}
+
+/* 날짜가 선택되었을 때 (숫자가 보이는 뱃지 형태) */
+.day-block.selected .indicator {
+  min-width: 16px;
+  padding: 1px 5px;
+  border-radius: 10px;
+  font-size: 0.7rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* 진행 중: 초록색, 완료: 빨간색 */
+.indicator.active-badge { background-color: #16a34a; }
+.indicator.completed-badge { background-color: #dc2626; }
+
+/* 입력 폼 영역 */
+.todo-form {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 1rem;
+}
+
+.todo-input {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.todo-input:focus { border-color: #672be0; }
+
+.add-btn {
+  background-color: #672be0;
+  color: #ffffff;
+  border: none;
+  padding: 0.75rem 1.25rem;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.add-btn:hover { background-color: #5321b8; }
+
+/* 필터 탭 컨테이너 */
+.filter-container {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 1.5rem;
+  background-color: #f1f5f9;
+  padding: 4px;
+  border-radius: 8px;
+}
+
+.filter-btn {
+  flex: 1;
+  border: none;
+  background: none;
+  padding: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #64748b;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.filter-btn:hover { color: #334155; }
+.filter-btn.active {
+  background-color: #ffffff;
+  color: #672be0;
+  font-weight: 600;
+  box-shadow: 0 2px 4px rgba(103, 43, 224, 0.06);
+}
+
+/* Todo 목록 영역 */
+.todo-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.empty-msg {
+  text-align: center;
+  color: #94a3b8;
+  font-size: 0.9rem;
+  padding: 1rem 0;
+}
+
+.todo-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background-color: #ffffff;
+  border: 1.5px solid #f1f5f9;
+  border-radius: 8px;
+}
+
+.todo-text {
+  font-size: 0.95rem;
+  color: #334155;
+  word-break: break-all;
+  flex: 1;
+  margin-right: 12px;
+}
+
+.todo-item.completed .todo-text {
+  text-decoration: line-through;
+  color: #94a3b8;
+}
+
+.edit-input {
+  flex: 1;
+  padding: 0.5rem;
+  border: 1.5px solid #672be0;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  outline: none;
+  margin-right: 8px;
+}
+
+.btn-group {
+  display: flex;
+  gap: 4px;
+}
+
+.action-btn {
+  border: none;
+  padding: 0.35rem 0.6rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.complete-btn { background-color: #f0fdf4; color: #16a34a; }
+.edit-btn { background-color: #fef9c3; color: #ca8a04; }
+.delete-btn { background-color: #fef2f2; color: #dc2626; }
+.save-btn { background-color: #e0e7ff; color: #4338ca; }
+.cancel-btn { background-color: #f1f5f9; color: #64748b; }
